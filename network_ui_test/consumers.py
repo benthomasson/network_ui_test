@@ -4,8 +4,8 @@ from channels import Group, Channel
 from channels.sessions import channel_session
 from awx.network_ui.models import Topology, Client
 from awx.network_ui.models import TopologyInventory
-from awx.network_ui_test.models import FSMTrace, EventTrace, Coverage, TopologySnapshot
-from awx.network_ui_test.models import TestCase, TestResult, CodeUnderTest, Result
+from network_ui_test.models import FSMTrace, EventTrace, Coverage, TopologySnapshot
+from network_ui_test.models import TestCase, TestResult, CodeUnderTest, Result
 import urlparse
 import logging
 from django.utils.dateparse import parse_datetime
@@ -14,7 +14,7 @@ from django.utils.dateparse import parse_datetime
 import json
 # Connected to websocket.connect
 
-logger = logging.getLogger("awx.network_ui_test.consumers")
+logger = logging.getLogger("network_ui_test.consumers")
 
 
 def parse_inventory_id(data):

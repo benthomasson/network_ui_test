@@ -1,4 +1,4 @@
-app: awx.network_ui_test
+app: network_ui_test
 external_models: []
 models:
 - fields:

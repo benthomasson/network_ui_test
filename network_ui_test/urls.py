@@ -1,7 +1,7 @@
 # Copyright (c) 2017 Red Hat, Inc
 from django.conf.urls import url
 
-from awx.network_ui_test import views
+from network_ui_test import views
 
 app_name = 'network_ui_test'
 urlpatterns = [
