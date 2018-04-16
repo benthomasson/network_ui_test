@@ -1,7 +1,7 @@
 # Copyright (c) 2017 Red Hat, Inc
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django import forms
-from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect, Http404
 from django.core.exceptions import ObjectDoesNotExist
 import yaml
 
@@ -29,7 +29,8 @@ def download_trace(request):
                                             client_id=client_id).order_by('order').values())
         response = HttpResponse(yaml.safe_dump(data, default_flow_style=False),
                                 content_type="application/force-download")
-        response['Content-Disposition'] = 'attachment; filename="trace_{0}_{1}_{2}.yml"'.format(topology_id, client_id, trace_id)
+        response['Content-Disposition'] = 'attachment; filename="trace_{0}_{1}_{2}.yml"'.format(
+            topology_id, client_id, trace_id)
         return response
     else:
         return HttpResponse(form.errors)
@@ -63,7 +64,8 @@ def download_recording(request):
                              .values_list('snapshot_data', flat=True)]
         response = HttpResponse(json.dumps(data, sort_keys=True, indent=4),
                                 content_type="application/force-download")
-        response['Content-Disposition'] = 'attachment; filename="trace_{0}_{1}_{2}.yml"'.format(topology_id, client_id, trace_id)
+        response['Content-Disposition'] = 'attachment; filename="trace_{0}_{1}_{2}.yml"'.format(
+            topology_id, client_id, trace_id)
         return response
     else:
         return HttpResponse(form.errors)
@@ -79,7 +81,7 @@ def tests(request):
 def create_test(name, data):
     try:
         test_case = TestCase.objects.get(name=name)
-        test_case.test_case_data=json.dumps(data)
+        test_case.test_case_data = json.dumps(data)
         test_case.save()
     except ObjectDoesNotExist:
         TestCase(name=name, test_case_data=json.dumps(data)).save()
@@ -104,9 +106,11 @@ def upload_test(request):
 
 
 def download_coverage(request, pk):
-    latest_tr = TestResult.objects.filter(test_case_id=pk).order_by('-time')[0]
-    coverage = Coverage.objects.get(test_result_id=latest_tr.pk)
-    response = HttpResponse(coverage.coverage_data,
-                            content_type="application/json")
-    return response
-
+    try:
+        latest_tr = TestResult.objects.filter(test_case_id=pk).order_by('-time')[0]
+        coverage = get_object_or_404(Coverage, test_result_id=latest_tr.pk)
+        response = HttpResponse(coverage.coverage_data,
+                                content_type="application/json")
+        return response
+    except IndexError:
+        raise Http404()

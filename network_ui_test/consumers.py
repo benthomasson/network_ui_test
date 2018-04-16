@@ -139,6 +139,7 @@ class TestPersistence(object):
                          client_id=client_id,
                          topology_id=topology_id).save()
 
+test_persistence_handler = TestPersistence()
 
 @channel_session
 def ws_connect(message):
@@ -150,12 +151,12 @@ def ws_connect(message):
     if len(topology_ids) > 0:
         topology_id = topology_ids[0]
     if topology_id is not None:
-        topology = Topology.objects.get(topology_id=topology_id)
+        topology = Topology.objects.get(id=topology_id)
     else:
         topology = Topology(name="topology", scale=1.0, panX=0, panY=0)
         topology.save()
         TopologyInventory(inventory_id=inventory_id, topology_id=topology.topology_id).save()
-    topology_id = topology.topology_id
+    topology_id = topology.id
     message.channel_session['topology_id'] = topology_id
     client = Client()
     client.save()
@@ -172,7 +173,7 @@ def send_tests(channel):
 
 @channel_session
 def ws_message(message):
-    Channel('test_persistence').send({"text": message['text'],
+    test_persistence_handler.handle({"text": message['text'],
                                       "topology": message.channel_session['topology_id'],
                                       "client": message.channel_session['client_id']})
 

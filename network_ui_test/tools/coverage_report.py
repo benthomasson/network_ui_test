@@ -15,6 +15,7 @@ import sys
 import os
 import requests
 import subprocess
+import json
 
 logger = logging.getLogger('coverage_report')
 
@@ -35,13 +36,18 @@ def main(args=None):
     server = parsed_args['<server>']
     tests = requests.get(server + TESTS_API, verify=False).json()
 
-    for test in tests['tests']:
-        if not os.path.exists(test['name']):
-            os.mkdir(test['name'])
-        with open(test['name'] + "/coverage.json", 'w') as f:
-            f.write(requests.get(server + test['coverage'], verify=False).text)
+    tests_with_coveage = []
 
     for test in tests['tests']:
+        response = requests.get(server + test['coverage'], verify=False)
+        if response.ok:
+            if not os.path.exists(test['name']):
+                os.mkdir(test['name'])
+            with open(test['name'] + "/coverage.json", 'w') as f:
+                f.write(json.dumps(json.loads(response.text), sort_keys=True, indent=4))
+                tests_with_coveage.append(test)
+
+    for test in tests_with_coveage:
         subprocess.Popen('istanbul report html', shell=True, cwd=test['name']).wait()
     subprocess.Popen('istanbul report html', shell=True).wait()
     return 0
