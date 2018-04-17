@@ -38,13 +38,35 @@ def main(args=None):
 
     tests_with_coveage = []
 
+    load_data = None
+
+    for test in tests['tests']:
+        if test['name'] == 'Load':
+            response = requests.get(server + test['coverage'], verify=False)
+            if response.ok:
+                load_data = json.loads(response.text)
+
     for test in tests['tests']:
         response = requests.get(server + test['coverage'], verify=False)
         if response.ok:
             if not os.path.exists(test['name']):
                 os.mkdir(test['name'])
-            with open(test['name'] + "/coverage.json", 'w') as f:
-                f.write(json.dumps(json.loads(response.text), sort_keys=True, indent=4))
+            with open(test['name'] + "/coverage.json", 'w') as file:
+                test_data = json.loads(response.text)
+                for f in test_data.keys():
+                    for i in load_data[f]['b']:
+                        if i not in test_data[f]['b']:
+                            test_data[f]['b'][i] = load_data[f]['b'][i]
+                            test_data[f]['branchMap'][i] = load_data[f]['branchMap'][i]
+                    for i in load_data[f]['f']:
+                        if i not in test_data[f]['f']:
+                            test_data[f]['f'][i] = load_data[f]['f'][i]
+                            test_data[f]['fnMap'][i] = load_data[f]['fnMap'][i]
+                    for i in load_data[f]['s']:
+                        if i not in test_data[f]['s']:
+                            test_data[f]['s'][i] = load_data[f]['s'][i]
+                            test_data[f]['statementMap'][i] = load_data[f]['statementMap'][i]
+                file.write(json.dumps(test_data, sort_keys=True, indent=4))
                 tests_with_coveage.append(test)
 
     for test in tests_with_coveage:

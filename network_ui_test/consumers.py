@@ -1,6 +1,6 @@
 # Copyright (c) 2018 Red Hat, Inc
 # In consumers.py
-from channels import Group, Channel
+from channels import Group
 from channels.sessions import channel_session
 from awx.network_ui.models import Topology, Client
 from awx.network_ui.models import TopologyInventory
@@ -57,8 +57,16 @@ class TestPersistence(object):
         handler = self.get_handler(message_type)
         if handler is not None:
             try:
+                print ("Processing ", message_type)
                 handler(message_value, topology_id, client_id)
+                Group("client-%s" % client_id).send({"text": json.dumps(
+                    ["Ack",
+                     {'message_type': message_type,
+                      'client_id': client_id,
+                      'message_id': message_value.get('message_id')}])})
+                print ("Finished processing ", message_type)
             except Exception:
+                print ("Error processing ", message_type)
                 Group("client-%s" % client_id).send({"text": json.dumps(["Error", "Server Error"])})
                 raise
         else:
@@ -99,7 +107,6 @@ class TestPersistence(object):
                         time=parse_datetime(test_result['date']))
         tr.save()
 
-
     def onCoverage(self, coverage, topology_id, client_id):
         Coverage(test_result_id=TestResult.objects.get(id=coverage['result_id'], client_id=client_id).pk,
                  coverage_data=json.dumps(coverage['coverage'])).save()
@@ -139,14 +146,18 @@ class TestPersistence(object):
                          client_id=client_id,
                          topology_id=topology_id).save()
 
+
 test_persistence_handler = TestPersistence()
+
 
 @channel_session
 def ws_connect(message):
     # Accept connection
     data = urlparse.parse_qs(message.content['query_string'])
     inventory_id = parse_inventory_id(data)
-    topology_ids = list(TopologyInventory.objects.filter(inventory_id=inventory_id).values_list('topology_id', flat=True))
+    topology_ids = list(TopologyInventory.objects
+                                         .filter(inventory_id=inventory_id)
+                                         .values_list('topology_id', flat=True))
     topology_id = None
     if len(topology_ids) > 0:
         topology_id = topology_ids[0]
@@ -174,12 +185,10 @@ def send_tests(channel):
 @channel_session
 def ws_message(message):
     test_persistence_handler.handle({"text": message['text'],
-                                      "topology": message.channel_session['topology_id'],
-                                      "client": message.channel_session['client_id']})
+                                     "topology": message.channel_session['topology_id'],
+                                     "client": message.channel_session['client_id']})
 
 
 @channel_session
 def ws_disconnect(message):
     pass
-
-
