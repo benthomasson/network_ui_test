@@ -56,16 +56,16 @@ def main(args=None):
                 for f in test_data.keys():
                     for i in load_data[f]['b']:
                         if i not in test_data[f]['b']:
-                            test_data[f]['b'][i] = load_data[f]['b'][i]
-                            test_data[f]['branchMap'][i] = load_data[f]['branchMap'][i]
+                            test_data[f]['b'][i] = [0, 0];
+                        test_data[f]['branchMap'][i] = load_data[f]['branchMap'][i]
                     for i in load_data[f]['f']:
                         if i not in test_data[f]['f']:
-                            test_data[f]['f'][i] = load_data[f]['f'][i]
-                            test_data[f]['fnMap'][i] = load_data[f]['fnMap'][i]
+                            test_data[f]['f'][i] = 0
+                        test_data[f]['fnMap'][i] = load_data[f]['fnMap'][i]
                     for i in load_data[f]['s']:
                         if i not in test_data[f]['s']:
-                            test_data[f]['s'][i] = load_data[f]['s'][i]
-                            test_data[f]['statementMap'][i] = load_data[f]['statementMap'][i]
+                            test_data[f]['s'][i] = 0
+                        test_data[f]['statementMap'][i] = load_data[f]['statementMap'][i]
                 file.write(json.dumps(test_data, sort_keys=True, indent=4))
                 tests_with_coveage.append(test)
 
